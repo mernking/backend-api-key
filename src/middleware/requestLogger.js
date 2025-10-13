@@ -37,6 +37,8 @@ async function requestLogger(req, res, next) {
       country: log.geo?.country,
       region: log.geo?.region,
       city: log.geo?.city,
+      latitude: log.geo?.lat,
+      longitude: log.geo?.lon,
       headers: log.headers,
     },
   }).catch(err => console.error('Failed to save request log:', err));

@@ -22,6 +22,8 @@ async function lookup(ip) {
       country: data.country || null,
       region: data.regionName || data.region || null,
       city: data.city || null,
+      lat: data.lat || null,
+      lon: data.lon || null,
     };
     cache.set(ip, out);
     return out;

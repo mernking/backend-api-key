@@ -74,5 +74,7 @@ model RequestLog {
   country   String?
   region    String?
   city      String?
+  latitude  Float?
+  longitude Float?
   headers   Json
 }
