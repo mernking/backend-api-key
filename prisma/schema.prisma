@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int       @id @default(autoincrement())
+  email      String    @unique
+  password   String
+  name       String?
+  createdAt  DateTime  @default(now())
+  apiKeys    ApiKey[]
+}
+
+model ApiKey {
+  id           Int      @id @default(autoincrement())
+  key          String   @unique
+  name         String?
+  user         User     @relation(fields: [userId], references: [id])
+  userId       Int
+  createdAt    DateTime @default(now())
+  isActive     Boolean  @default(true)
+  dailyLimit   Int?     // optional usage limit to trigger alerts
+  alerts       Alert[]
+  links        Link[]
+}
+
+model Link {
+  id         Int      @id @default(autoincrement())
+  slug       String   @unique
+  destination String
+  title      String?
+  createdBy  ApiKey   @relation(fields: [apiKeyId], references: [id])
+  apiKeyId   Int
+  createdAt  DateTime @default(now())
+  clicks     Click[]
+  meta       Json?
+}
+
+model Click {
+  id         Int      @id @default(autoincrement())
+  link       Link     @relation(fields: [linkId], references: [id])
+  linkId     Int
+  occurredAt DateTime @default(now())
+  ip         String?
+  country    String?
+  region     String?
+  city       String?
+  ua         String?
+  referrer   String?
+  headers    Json?
+}
+
+model Alert {
+  id        Int      @id @default(autoincrement())
+  apiKey    ApiKey   @relation(fields: [apiKeyId], references: [id])
+  apiKeyId  Int
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+  resolved  Boolean  @default(false)
+}
+
+model RequestLog {
+  id        Int      @id @default(autoincrement())
+  time      DateTime @default(now())
+  method    String
+  path      String
+  ip        String
+  country   String?
+  region    String?
+  city      String?
+  headers   Json
+}

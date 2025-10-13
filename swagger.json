@@ -1,0 +1,277 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "URL Shortener API", "version": "1.0.0" },
+  "servers": [
+    { "url": "http://localhost:4000", "description": "Development server" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "apiKey": { "type": "apiKey", "in": "header", "name": "x-api-key" }
+    }
+  },
+  "security": [],
+  "paths": {
+    "/signup": {
+      "post": {
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "mysecretpassword"
+                  },
+                  "name": { "type": "string", "example": "John Doe" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User registered successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "email": { "type": "string" },
+                    "name": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid input or user creation failed." }
+        }
+      }
+    },
+    "/login": {
+      "post": {
+        "summary": "Log in a user and get a JWT token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email", "password"],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "mysecretpassword"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User logged in successfully, returns JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": {
+                      "type": "string",
+                      "description": "JWT authentication token."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Invalid credentials." }
+        }
+      }
+    },
+    "/api/api-keys": {
+      "post": {
+        "summary": "Create a new API key for the authenticated user",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Optional name for the API key.",
+                    "example": "My Marketing Key"
+                  },
+                  "dailyLimit": {
+                    "type": "integer",
+                    "description": "Optional daily usage limit for the API key.",
+                    "example": 1000
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "API key created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "apiKey": {
+                      "type": "string",
+                      "description": "The generated API key."
+                    },
+                    "id": { "type": "integer" },
+                    "createdAt": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized, JWT token missing or invalid."
+          }
+        }
+      }
+    },
+    "/api/links": {
+      "post": {
+        "summary": "Create a short link",
+        "security": [{ "apiKey": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "destination": {
+                    "type": "string",
+                    "description": "The URL to shorten.",
+                    "example": "https://example.com/long-url"
+                  },
+                  "slug": {
+                    "type": "string",
+                    "description": "Optional custom slug for the short URL.",
+                    "example": "my-custom-slug"
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Optional title for the link.",
+                    "example": "My Awesome Product Page"
+                  },
+                  "meta": {
+                    "type": "object",
+                    "description": "Optional metadata for the link."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Short link created successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": { "type": "string" },
+                    "shortUrl": { "type": "string" },
+                    "id": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "description": "Invalid request or link creation failed." },
+          "401": { "description": "Unauthorized, API key missing or invalid." }
+        }
+      }
+    },
+    "/api/links/{slug}/stats": {
+      "get": {
+        "summary": "Get statistics for a short link",
+        "security": [{ "apiKey": [] }],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "description": "The slug of the short link.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link statistics retrieved successfully.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "slug": { "type": "string" },
+                    "destination": { "type": "string" },
+                    "clicksCount": { "type": "integer" },
+                    "clicks": { "type": "array", "items": { "type": "object" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "description": "Unauthorized, API key missing or invalid." },
+          "404": { "description": "Link not found." }
+        }
+      }
+    },
+    "/{slug}": {
+      "get": {
+        "summary": "Redirect to the original URL and track the click",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "description": "The slug of the short link.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirects to the original destination URL."
+          },
+          "404": { "description": "Link not found." }
+        }
+      }
+    }
+  },
+  "tags": []
+}
