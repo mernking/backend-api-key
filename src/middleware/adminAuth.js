@@ -14,7 +14,7 @@ async function adminAuth(req, res, next) {
       where: { id: decoded.userId },
     });
 
-    if (!user || user.email !== 'admin@example.com') {
+    if (!user || !user.isAdmin) {
       return res.status(403).json({ error: 'Admin access required' });
     }
 

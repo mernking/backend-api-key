@@ -28,9 +28,15 @@ app.get('/swagger.json', (req, res) => res.json(swaggerSpec));
 // API endpoints for authenticated users (JWT)
 app.post('/api/api-keys', jwtAuth, authController.createApiKey);
 
-// API-key protected endpoints (create link)
+// API-key protected endpoints
 app.post('/api/links', apiKeyAuth, linksController.createLink);
+app.get('/api/links', apiKeyAuth, linksController.listLinks);
+app.put('/api/links/:id', apiKeyAuth, linksController.updateLink);
+app.delete('/api/links/:id', apiKeyAuth, linksController.deleteLink);
 app.get('/api/links/:slug/stats', apiKeyAuth, linksController.getLinkStats);
+app.post('/api/links/bulk', apiKeyAuth, linksController.bulkCreateLinks);
+app.put('/api/links/bulk', apiKeyAuth, linksController.bulkUpdateLinks);
+app.delete('/api/links/bulk', apiKeyAuth, linksController.bulkDeleteLinks);
 
 // public redirect endpoint (tracks clicks)
 app.get('/:slug', trackController.redirectHandler);
@@ -39,6 +45,28 @@ app.get('/:slug', trackController.redirectHandler);
 app.post('/admin/login', adminController.adminLogin);
 app.get('/admin/logs', adminAuth, adminController.getLogs);
 app.get('/admin/stats', adminAuth, adminController.getStats);
+app.get('/admin/analytics', adminAuth, adminController.getAnalytics);
+
+// admin user management
+app.get('/admin/users', adminAuth, adminController.getAdminUsers);
+app.post('/admin/users', adminAuth, adminController.createAdminUser);
+app.put('/admin/users/:id', adminAuth, adminController.updateAdminUser);
+app.delete('/admin/users/:id', adminAuth, adminController.deleteAdminUser);
+
+// admin link management
+// admin routes
+app.post('/admin/login', adminController.adminLogin);
+app.get('/admin/logs', adminAuth, adminController.getLogs);
+app.get('/admin/stats', adminAuth, adminController.getStats);
+app.get('/admin/analytics', adminAuth, adminController.getAnalytics);
+
+// admin link management
+app.get('/admin/links', adminAuth, adminController.getAllLinks);
+app.post('/admin/links', adminAuth, adminController.createAdminLink);
+app.put('/admin/links/:id', adminAuth, adminController.updateAdminLink);
+app.delete('/admin/links/:id', adminAuth, adminController.deleteAdminLink);
+app.delete('/admin/links', adminAuth, adminController.bulkDeleteAdminLinks);
+app.get('/admin/tags', adminAuth, adminController.getAdminTags);
 
 // health
 app.get('/health', (req,res)=>res.json({ok:true}));

@@ -29,7 +29,7 @@ async function requestLogger(req, res, next) {
   console.log(JSON.stringify(log));
 
   // Save to database
-  await prisma.requestLog.create({
+  const newLog = await prisma.requestLog.create({
     data: {
       method: log.method,
       path: log.path,
@@ -42,6 +42,23 @@ async function requestLogger(req, res, next) {
       headers: log.headers,
     },
   }).catch(err => console.error('Failed to save request log:', err));
+
+  // Emit real-time update to connected admin clients
+  if (newLog) {
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('new-request', {
+        id: newLog.id,
+        method: newLog.method,
+        path: newLog.path,
+        country: newLog.country,
+        city: newLog.city,
+        latitude: newLog.latitude,
+        longitude: newLog.longitude,
+        time: newLog.time
+      });
+    }
+  }
 
   // attach to req for later usage (e.g., click recording)
   req._logger = log;

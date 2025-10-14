@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { Moon, Sun, Link as LinkIcon } from "lucide-react";
 import MapComponent from "../components/MapComponent";
 import GlobeComponent from "../components/GlobeComponent";
 import {
@@ -10,18 +11,76 @@ import {
   TrendingUp,
   Users,
   Globe,
-  Server
+  Server,
+  BarChart3,
+  UserCog,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function Dashboard({ onLogout }) {
   const [stats, setStats] = useState({});
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  // Filter states
+  const [methodFilter, setMethodFilter] = useState("");
+  const [countryFilter, setCountryFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50); // Fixed at 50 for performance
+
+  // Filtered logs based on active filters
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
+      // Method filter
+      if (methodFilter && log.method !== methodFilter) return false;
+
+      // Country filter
+      if (countryFilter && log.country !== countryFilter) return false;
+
+      // Date range filter
+      if (dateFrom || dateTo) {
+        const logDate = new Date(log.time);
+        if (dateFrom && logDate < new Date(dateFrom)) return false;
+        if (dateTo && logDate > new Date(dateTo + "T23:59:59")) return false;
+      }
+
+      // Search query (path or IP)
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesPath = log.path.toLowerCase().includes(query);
+        const matchesIP = log.ip && log.ip.toLowerCase().includes(query);
+        if (!matchesPath && !matchesIP) return false;
+      }
+
+      return true;
+    });
+  }, [logs, methodFilter, countryFilter, dateFrom, dateTo, searchQuery]);
+
+  // Paginated logs
+  const paginatedLogs = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredLogs.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredLogs, currentPage, itemsPerPage]);
+
+  // Total pages
+  const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+  };
 
   const fetchData = async () => {
     try {
@@ -61,16 +120,40 @@ function Dashboard({ onLogout }) {
   }
 
   return (
-    <div data-theme="light" className="min-h-screen bg-base-200">
+    <div data-theme={theme} className="min-h-screen bg-base-200">
       {/* Header */}
       <div className="navbar bg-base-100 shadow-lg">
         <div className="navbar-start">
           <div className="flex items-center gap-2">
             <Server className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">Server Management Dashboard</h1>
+            <h1 className="text-2xl font-bold text-primary">
+              Server Management Dashboard
+            </h1>
           </div>
         </div>
         <div className="navbar-end">
+          <Link to="/links" className="btn btn-outline btn-primary mr-2">
+            <LinkIcon className="w-4 h-4" />
+            Manage Links
+          </Link>
+          <Link to="/analytics" className="btn btn-outline btn-secondary mr-2">
+            <BarChart3 className="w-4 h-4" />
+            Analytics
+          </Link>
+          <Link to="/users" className="btn btn-outline btn-accent mr-2">
+            <UserCog className="w-4 h-4" />
+            Users
+          </Link>
+          <button
+            onClick={toggleTheme}
+            className="btn btn-circle btn-ghost mr-2"
+          >
+            {theme === "light" ? (
+              <Moon className="w-5 h-5" />
+            ) : (
+              <Sun className="w-5 h-5" />
+            )}
+          </button>
           <button onClick={handleLogout} className="btn btn-outline btn-error">
             <LogOut className="w-4 h-4" />
             Logout
@@ -179,6 +262,81 @@ function Dashboard({ onLogout }) {
               <Activity className="w-5 h-5 text-accent" />
               <h3 className="card-title">Recent Request Logs</h3>
             </div>
+
+            {/* Filters */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+              <select
+                className="select select-bordered select-sm"
+                value={methodFilter}
+                onChange={(e) => {
+                  setMethodFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="">All Methods</option>
+                <option value="GET">GET</option>
+                <option value="POST">POST</option>
+                <option value="PUT">PUT</option>
+                <option value="DELETE">DELETE</option>
+                <option value="PATCH">PATCH</option>
+              </select>
+
+              <select
+                className="select select-bordered select-sm"
+                value={countryFilter}
+                onChange={(e) => {
+                  setCountryFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <option value="">All Countries</option>
+                {[...new Set(logs.map((log) => log.country).filter(Boolean))]
+                  .sort()
+                  .map((country) => (
+                    <option key={country} value={country}>
+                      {country}
+                    </option>
+                  ))}
+              </select>
+
+              <input
+                type="date"
+                className="input input-bordered input-sm"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="From Date"
+              />
+
+              <input
+                type="date"
+                className="input input-bordered input-sm"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="To Date"
+              />
+
+              <input
+                type="text"
+                className="input input-bordered input-sm"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Search path or IP..."
+              />
+            </div>
+
+            {/* Results count */}
+            <div className="text-sm text-base-content/70 mb-2">
+              Showing {paginatedLogs.length} of {filteredLogs.length} logs
+            </div>
             <div className="overflow-x-auto max-h-96">
               <table className="table table-zebra w-full">
                 <thead className="sticky top-0 bg-base-100">
@@ -192,8 +350,11 @@ function Dashboard({ onLogout }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {logs.map((log) => (
-                    <tr key={log.id} className={log.country ? "bg-base-200/50" : ""}>
+                  {paginatedLogs.map((log) => (
+                    <tr
+                      key={log.id}
+                      className={log.country ? "bg-base-200/50" : ""}
+                    >
                       <td className="text-sm font-mono">
                         {new Date(log.time).toLocaleString()}
                       </td>
@@ -231,6 +392,55 @@ function Dashboard({ onLogout }) {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-base-content/70">
+                  Page {currentPage} of {totalPages}
+                </div>
+                <div className="join">
+                  <button
+                    className="join-item btn btn-sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    const pageNum =
+                      Math.max(1, Math.min(totalPages - 4, currentPage - 2)) +
+                      i;
+                    if (pageNum > totalPages) return null;
+                    return (
+                      <button
+                        key={pageNum}
+                        className={`join-item btn btn-sm ${
+                          currentPage === pageNum ? "btn-active" : ""
+                        }`}
+                        onClick={() => setCurrentPage(pageNum)}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    className="join-item btn btn-sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

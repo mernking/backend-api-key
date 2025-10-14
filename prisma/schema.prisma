@@ -12,6 +12,7 @@ model User {
   email      String    @unique
   password   String
   name       String?
+  isAdmin    Boolean   @default(false)
   createdAt  DateTime  @default(now())
   apiKeys    ApiKey[]
 }
@@ -34,10 +35,14 @@ model Link {
   slug       String   @unique
   destination String
   title      String?
+  webhookUrl String?
   createdBy  ApiKey   @relation(fields: [apiKeyId], references: [id])
   apiKeyId   Int
   createdAt  DateTime @default(now())
+  expiresAt  DateTime?
+  password   String?
   clicks     Click[]
+  tags       Tag[]
   meta       Json?
 }
 
@@ -63,6 +68,12 @@ model Alert {
   message   String
   createdAt DateTime @default(now())
   resolved  Boolean  @default(false)
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  links Link[]
 }
 
 model RequestLog {

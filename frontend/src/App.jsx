@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import LinkManagement from './pages/LinkManagement.jsx';
+import UserManagement from './pages/UserManagement.jsx';
+import Analytics from './pages/Analytics.jsx';
 import { Activity } from 'lucide-react';
+import io from 'socket.io-client';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -58,6 +62,36 @@ function App() {
           element={
             isAuthenticated ? (
               <Dashboard onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/links"
+          element={
+            isAuthenticated ? (
+              <LinkManagement onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/users"
+          element={
+            isAuthenticated ? (
+              <UserManagement onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/analytics"
+          element={
+            isAuthenticated ? (
+              <Analytics onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )
