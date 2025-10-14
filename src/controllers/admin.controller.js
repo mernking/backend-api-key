@@ -490,6 +490,278 @@ async function getAdminTags(req, res) {
   }
 }
 
+async function getActivityLogs(req, res) {
+  try {
+    const { page = 1, limit = 50, userId, action, resource } = req.query;
+    const offset = (page - 1) * limit;
+
+    let whereClause = {};
+
+    if (userId) whereClause.userId = parseInt(userId);
+    if (action) whereClause.action = action;
+    if (resource) whereClause.resource = resource;
+
+    const logs = await prisma.activityLog.findMany({
+      where: whereClause,
+      include: {
+        user: {
+          select: { id: true, email: true, name: true }
+        }
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: parseInt(limit)
+    });
+
+    const total = await prisma.activityLog.count({ where: whereClause });
+
+    res.json({
+      logs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch activity logs' });
+  }
+}
+
+// Role and permission management endpoints
+
+async function getAdminRoles(req, res) {
+  try {
+    const roles = await prisma.role.findMany({
+      include: {
+        _count: {
+          select: { userRoles: true }
+        },
+        rolePermissions: {
+          include: {
+            permission: true
+          }
+        }
+      }
+    });
+
+    res.json({ roles });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch roles' });
+  }
+}
+
+async function createAdminRole(req, res) {
+  try {
+    const { name, description, permissionIds } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Role name is required' });
+    }
+
+    const existingRole = await prisma.role.findUnique({
+      where: { name }
+    });
+
+    if (existingRole) {
+      return res.status(409).json({ error: 'Role with this name already exists' });
+    }
+
+    const role = await prisma.role.create({
+      data: {
+        name,
+        description,
+        rolePermissions: permissionIds ? {
+          create: permissionIds.map(permissionId => ({
+            permissionId: parseInt(permissionId)
+          }))
+        } : undefined
+      },
+      include: {
+        rolePermissions: {
+          include: {
+            permission: true
+          }
+        }
+      }
+    });
+
+    res.status(201).json(role);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create role' });
+  }
+}
+
+async function updateAdminRole(req, res) {
+  try {
+    const { id } = req.params;
+    const { name, description, permissionIds } = req.body;
+
+    const role = await prisma.role.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        description,
+        rolePermissions: permissionIds ? {
+          set: permissionIds.map(permissionId => ({
+            roleId_permissionId: {
+              roleId: parseInt(id),
+              permissionId: parseInt(permissionId)
+            }
+          }))
+        } : undefined
+      },
+      include: {
+        rolePermissions: {
+          include: {
+            permission: true
+          }
+        }
+      }
+    });
+
+    res.json(role);
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+    res.status(500).json({ error: 'Failed to update role' });
+  }
+}
+
+async function deleteAdminRole(req, res) {
+  try {
+    const { id } = req.params;
+    await prisma.role.delete({
+      where: { id: parseInt(id) }
+    });
+    res.json({ message: 'Role deleted successfully' });
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+    res.status(500).json({ error: 'Failed to delete role' });
+  }
+}
+
+async function getAdminPermissions(req, res) {
+  try {
+    const permissions = await prisma.permission.findMany({
+      include: {
+        _count: {
+          select: { rolePermissions: true }
+        }
+      }
+    });
+
+    res.json({ permissions });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch permissions' });
+  }
+}
+
+async function createAdminPermission(req, res) {
+  try {
+    const { name, description, resource, action } = req.body;
+
+    if (!name || !resource || !action) {
+      return res.status(400).json({ error: 'name, resource, and action are required' });
+    }
+
+    const existingPermission = await prisma.permission.findUnique({
+      where: { name }
+    });
+
+    if (existingPermission) {
+      return res.status(409).json({ error: 'Permission with this name already exists' });
+    }
+
+    const permission = await prisma.permission.create({
+      data: { name, description, resource, action }
+    });
+
+    res.status(201).json(permission);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to create permission' });
+  }
+}
+
+async function assignRoleToAdminUser(req, res) {
+  try {
+    const { userId, roleId } = req.body;
+
+    if (!userId || !roleId) {
+      return res.status(400).json({ error: 'userId and roleId are required' });
+    }
+
+    const userRole = await prisma.userRole.create({
+      data: {
+        userId: parseInt(userId),
+        roleId: parseInt(roleId)
+      },
+      include: {
+        user: { select: { id: true, email: true, name: true } },
+        role: true
+      }
+    });
+
+    res.status(201).json(userRole);
+  } catch (error) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({ error: 'User already has this role' });
+    }
+    res.status(500).json({ error: 'Failed to assign role' });
+  }
+}
+
+async function removeRoleFromAdminUser(req, res) {
+  try {
+    const { userId, roleId } = req.params;
+
+    await prisma.userRole.delete({
+      where: {
+        userId_roleId: {
+          userId: parseInt(userId),
+          roleId: parseInt(roleId)
+        }
+      }
+    });
+
+    res.json({ message: 'Role removed from user successfully' });
+  } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ error: 'User role assignment not found' });
+    }
+    res.status(500).json({ error: 'Failed to remove role' });
+  }
+}
+
+async function getAdminUserRoles(req, res) {
+  try {
+    const { userId } = req.params;
+
+    const userRoles = await prisma.userRole.findMany({
+      where: { userId: parseInt(userId) },
+      include: {
+        role: {
+          include: {
+            rolePermissions: {
+              include: {
+                permission: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    res.json({ userRoles });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch user roles' });
+  }
+}
+
 module.exports = {
   adminLogin,
   getLogs,
@@ -505,6 +777,16 @@ module.exports = {
   createAdminUser,
   updateAdminUser,
   deleteAdminUser,
+  getActivityLogs,
+  getAdminRoles,
+  createAdminRole,
+  updateAdminRole,
+  deleteAdminRole,
+  getAdminPermissions,
+  createAdminPermission,
+  assignRoleToAdminUser,
+  removeRoleFromAdminUser,
+  getAdminUserRoles,
 };
 // Admin user management endpoints
 

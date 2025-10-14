@@ -1,21 +1,19 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { Moon, Sun, Link as LinkIcon } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import MapComponent from "../components/MapComponent";
 import GlobeComponent from "../components/GlobeComponent";
+import Sidebar from "../components/Sidebar";
 import {
   Activity,
   Globe as GlobeIcon,
   MapPin,
-  LogOut,
   TrendingUp,
   Users,
   Globe,
   Server,
   BarChart3,
-  UserCog,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 function Dashboard({ onLogout }) {
   const [stats, setStats] = useState({});
@@ -107,340 +105,324 @@ function Dashboard({ onLogout }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-base-200 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="loading loading-spinner loading-lg text-primary"></div>
-          <div className="flex items-center gap-2">
-            <Activity className="w-6 h-6 animate-pulse" />
-            <span className="text-lg">Loading Dashboard...</span>
+        <div className="min-h-screen bg-base-200 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="loading loading-spinner loading-lg text-primary"></div>
+            <div className="flex items-center gap-2">
+              <Activity className="w-6 h-6 animate-pulse" />
+              <span className="text-lg">Loading Dashboard...</span>
+            </div>
           </div>
         </div>
-      </div>
     );
   }
 
   return (
-    <div data-theme={theme} className="min-h-screen bg-base-200">
-      {/* Header */}
-      <div className="navbar bg-base-100 shadow-lg">
-        <div className="navbar-start">
-          <div className="flex items-center gap-2">
-            <Server className="w-8 h-8 text-primary" />
-            <h1 className="text-2xl font-bold text-primary">
-              Server Management Dashboard
-            </h1>
+    <div data-theme={theme} className="min-h-screen bg-base-200 flex">
+      <Sidebar onLogout={onLogout} />
+
+      <div className="flex-1 flex flex-col">
+        <div className="navbar bg-base-100 shadow-lg">
+          <div className="navbar-start">
+            <h1 className="text-2xl font-bold text-primary">Dashboard</h1>
+          </div>
+          <div className="navbar-end">
+            <button
+              onClick={toggleTheme}
+              className="btn btn-circle btn-ghost mr-2"
+            >
+              {theme === "light" ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
+            </button>
           </div>
         </div>
-        <div className="navbar-end">
-          <Link to="/links" className="btn btn-outline btn-primary mr-2">
-            <LinkIcon className="w-4 h-4" />
-            Manage Links
-          </Link>
-          <Link to="/analytics" className="btn btn-outline btn-secondary mr-2">
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </Link>
-          <Link to="/users" className="btn btn-outline btn-accent mr-2">
-            <UserCog className="w-4 h-4" />
-            Users
-          </Link>
-          <button
-            onClick={toggleTheme}
-            className="btn btn-circle btn-ghost mr-2"
-          >
-            {theme === "light" ? (
-              <Moon className="w-5 h-5" />
-            ) : (
-              <Sun className="w-5 h-5" />
-            )}
-          </button>
-          <button onClick={handleLogout} className="btn btn-outline btn-error">
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
-        </div>
-      </div>
 
-      <div className="container mx-auto p-6 space-y-6">
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
-          </div>
-        )}
+        <div className="flex-1 p-6 space-y-6">
+          {error && (
+            <div className="alert alert-error">
+              <span>{error}</span>
+            </div>
+          )}
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-            <div className="card-body">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <TrendingUp className="w-6 h-6 text-primary" />
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+              <div className="card-body">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-primary/10 rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="card-title text-sm opacity-70 uppercase tracking-wide">
+                      Total Requests
+                    </h3>
+                    <p className="text-4xl font-bold text-primary">
+                      {stats.totalRequests || 0}
+                    </p>
+                    <p className="text-sm opacity-60">All time requests</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="card-title text-sm opacity-70 uppercase tracking-wide">
-                    Total Requests
-                  </h3>
-                  <p className="text-4xl font-bold text-primary">
-                    {stats.totalRequests || 0}
-                  </p>
-                  <p className="text-sm opacity-60">All time requests</p>
+              </div>
+            </div>
+
+            <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+              <div className="card-body">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-secondary/10 rounded-lg">
+                    <Users className="w-6 h-6 text-secondary" />
+                  </div>
+                  <div>
+                    <h3 className="card-title text-sm opacity-70 uppercase tracking-wide">
+                      Unique IPs
+                    </h3>
+                    <p className="text-4xl font-bold text-secondary">
+                      {stats.uniqueIPs || 0}
+                    </p>
+                    <p className="text-sm opacity-60">Distinct IP addresses</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+              <div className="card-body">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 bg-accent/10 rounded-lg">
+                    <GlobeIcon className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <h3 className="card-title text-sm opacity-70 uppercase tracking-wide">
+                      Unique Countries
+                    </h3>
+                    <p className="text-4xl font-bold text-accent">
+                      {stats.uniqueCountries || 0}
+                    </p>
+                    <p className="text-sm opacity-60">
+                      Countries with requests
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-            <div className="card-body">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-secondary/10 rounded-lg">
-                  <Users className="w-6 h-6 text-secondary" />
+          {/* Maps Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <div className="flex items-center gap-2 mb-4">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  <h3 className="card-title">Request Locations (Map)</h3>
                 </div>
-                <div>
-                  <h3 className="card-title text-sm opacity-70 uppercase tracking-wide">
-                    Unique IPs
-                  </h3>
-                  <p className="text-4xl font-bold text-secondary">
-                    {stats.uniqueIPs || 0}
-                  </p>
-                  <p className="text-sm opacity-60">Distinct IP addresses</p>
+                <div className="h-96 rounded-lg overflow-hidden">
+                  <MapComponent logs={logs} />
+                </div>
+              </div>
+            </div>
+
+            <div className="card bg-base-100 shadow-xl">
+              <div className="card-body">
+                <div className="flex items-center gap-2 mb-4">
+                  <Globe className="w-5 h-5 text-secondary" />
+                  <h3 className="card-title">Request Locations (3D Globe)</h3>
+                </div>
+                <div className="h-96 rounded-lg overflow-hidden">
+                  <GlobeComponent logs={logs} />
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
-            <div className="card-body">
-              <div className="flex items-center gap-3">
-                <div className="p-3 bg-accent/10 rounded-lg">
-                  <GlobeIcon className="w-6 h-6 text-accent" />
-                </div>
-                <div>
-                  <h3 className="card-title text-sm opacity-70 uppercase tracking-wide">
-                    Unique Countries
-                  </h3>
-                  <p className="text-4xl font-bold text-accent">
-                    {stats.uniqueCountries || 0}
-                  </p>
-                  <p className="text-sm opacity-60">Countries with requests</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Maps Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Logs Table */}
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <div className="flex items-center gap-2 mb-4">
-                <MapPin className="w-5 h-5 text-primary" />
-                <h3 className="card-title">Request Locations (Map)</h3>
+                <Activity className="w-5 h-5 text-accent" />
+                <h3 className="card-title">Recent Request Logs</h3>
               </div>
-              <div className="h-96 rounded-lg overflow-hidden">
-                <MapComponent logs={logs} />
+
+              {/* Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+                <select
+                  className="select select-bordered select-sm"
+                  value={methodFilter}
+                  onChange={(e) => {
+                    setMethodFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="">All Methods</option>
+                  <option value="GET">GET</option>
+                  <option value="POST">POST</option>
+                  <option value="PUT">PUT</option>
+                  <option value="DELETE">DELETE</option>
+                  <option value="PATCH">PATCH</option>
+                </select>
+
+                <select
+                  className="select select-bordered select-sm"
+                  value={countryFilter}
+                  onChange={(e) => {
+                    setCountryFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value="">All Countries</option>
+                  {[...new Set(logs.map((log) => log.country).filter(Boolean))]
+                    .sort()
+                    .map((country) => (
+                      <option key={country} value={country}>
+                        {country}
+                      </option>
+                    ))}
+                </select>
+
+                <input
+                  type="date"
+                  className="input input-bordered input-sm"
+                  value={dateFrom}
+                  onChange={(e) => {
+                    setDateFrom(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="From Date"
+                />
+
+                <input
+                  type="date"
+                  className="input input-bordered input-sm"
+                  value={dateTo}
+                  onChange={(e) => {
+                    setDateTo(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="To Date"
+                />
+
+                <input
+                  type="text"
+                  className="input input-bordered input-sm"
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  placeholder="Search path or IP..."
+                />
               </div>
-            </div>
-          </div>
 
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <div className="flex items-center gap-2 mb-4">
-                <Globe className="w-5 h-5 text-secondary" />
-                <h3 className="card-title">Request Locations (3D Globe)</h3>
+              {/* Results count */}
+              <div className="text-sm text-base-content/70 mb-2">
+                Showing {paginatedLogs.length} of {filteredLogs.length} logs
               </div>
-              <div className="h-96 rounded-lg overflow-hidden">
-                <GlobeComponent logs={logs} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Logs Table */}
-        <div className="card bg-base-100 shadow-xl">
-          <div className="card-body">
-            <div className="flex items-center gap-2 mb-4">
-              <Activity className="w-5 h-5 text-accent" />
-              <h3 className="card-title">Recent Request Logs</h3>
-            </div>
-
-            {/* Filters */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
-              <select
-                className="select select-bordered select-sm"
-                value={methodFilter}
-                onChange={(e) => {
-                  setMethodFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              >
-                <option value="">All Methods</option>
-                <option value="GET">GET</option>
-                <option value="POST">POST</option>
-                <option value="PUT">PUT</option>
-                <option value="DELETE">DELETE</option>
-                <option value="PATCH">PATCH</option>
-              </select>
-
-              <select
-                className="select select-bordered select-sm"
-                value={countryFilter}
-                onChange={(e) => {
-                  setCountryFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-              >
-                <option value="">All Countries</option>
-                {[...new Set(logs.map((log) => log.country).filter(Boolean))]
-                  .sort()
-                  .map((country) => (
-                    <option key={country} value={country}>
-                      {country}
-                    </option>
-                  ))}
-              </select>
-
-              <input
-                type="date"
-                className="input input-bordered input-sm"
-                value={dateFrom}
-                onChange={(e) => {
-                  setDateFrom(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="From Date"
-              />
-
-              <input
-                type="date"
-                className="input input-bordered input-sm"
-                value={dateTo}
-                onChange={(e) => {
-                  setDateTo(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="To Date"
-              />
-
-              <input
-                type="text"
-                className="input input-bordered input-sm"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Search path or IP..."
-              />
-            </div>
-
-            {/* Results count */}
-            <div className="text-sm text-base-content/70 mb-2">
-              Showing {paginatedLogs.length} of {filteredLogs.length} logs
-            </div>
-            <div className="overflow-x-auto max-h-96">
-              <table className="table table-zebra w-full">
-                <thead className="sticky top-0 bg-base-100">
-                  <tr>
-                    <th>Time</th>
-                    <th>Method</th>
-                    <th>Path</th>
-                    <th>IP</th>
-                    <th>Country</th>
-                    <th>City</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {paginatedLogs.map((log) => (
-                    <tr
-                      key={log.id}
-                      className={log.country ? "bg-base-200/50" : ""}
-                    >
-                      <td className="text-sm font-mono">
-                        {new Date(log.time).toLocaleString()}
-                      </td>
-                      <td>
-                        <div
-                          className={`badge ${
-                            log.method === "GET"
-                              ? "badge-success"
-                              : log.method === "POST"
-                              ? "badge-primary"
-                              : log.method === "PUT"
-                              ? "badge-warning"
-                              : log.method === "DELETE"
-                              ? "badge-error"
-                              : "badge-neutral"
-                          }`}
-                        >
-                          {log.method}
-                        </div>
-                      </td>
-                      <td className="font-mono text-sm max-w-xs truncate">
-                        {log.path}
-                      </td>
-                      <td className="font-mono text-sm">{log.ip}</td>
-                      <td>
-                        {log.country && (
-                          <div className="badge badge-info badge-sm">
-                            {log.country}
-                          </div>
-                        )}
-                      </td>
-                      <td>{log.city}</td>
+              <div className="overflow-x-auto max-h-96">
+                <table className="table table-zebra w-full">
+                  <thead className="sticky top-0 bg-base-100">
+                    <tr>
+                      <th>Time</th>
+                      <th>Method</th>
+                      <th>Path</th>
+                      <th>IP</th>
+                      <th>Country</th>
+                      <th>City</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-base-content/70">
-                  Page {currentPage} of {totalPages}
-                </div>
-                <div className="join">
-                  <button
-                    className="join-item btn btn-sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
-                    }
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </button>
-
-                  {/* Page numbers */}
-                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                    const pageNum =
-                      Math.max(1, Math.min(totalPages - 4, currentPage - 2)) +
-                      i;
-                    if (pageNum > totalPages) return null;
-                    return (
-                      <button
-                        key={pageNum}
-                        className={`join-item btn btn-sm ${
-                          currentPage === pageNum ? "btn-active" : ""
-                        }`}
-                        onClick={() => setCurrentPage(pageNum)}
+                  </thead>
+                  <tbody>
+                    {paginatedLogs.map((log) => (
+                      <tr
+                        key={log.id}
+                        className={log.country ? "bg-base-200/50" : ""}
                       >
-                        {pageNum}
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    className="join-item btn btn-sm"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
-                    }
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </button>
-                </div>
+                        <td className="text-sm font-mono">
+                          {new Date(log.time).toLocaleString()}
+                        </td>
+                        <td>
+                          <div
+                            className={`badge ${
+                              log.method === "GET"
+                                ? "badge-success"
+                                : log.method === "POST"
+                                ? "badge-primary"
+                                : log.method === "PUT"
+                                ? "badge-warning"
+                                : log.method === "DELETE"
+                                ? "badge-error"
+                                : "badge-neutral"
+                            }`}
+                          >
+                            {log.method}
+                          </div>
+                        </td>
+                        <td className="font-mono text-sm max-w-xs truncate">
+                          {log.path}
+                        </td>
+                        <td className="font-mono text-sm">{log.ip}</td>
+                        <td>
+                          {log.country && (
+                            <div className="badge badge-info badge-sm">
+                              {log.country}
+                            </div>
+                          )}
+                        </td>
+                        <td>{log.city}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex justify-between items-center mt-4">
+                  <div className="text-sm text-base-content/70">
+                    Page {currentPage} of {totalPages}
+                  </div>
+                  <div className="join">
+                    <button
+                      className="join-item btn btn-sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(1, prev - 1))
+                      }
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </button>
+
+                    {/* Page numbers */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNum =
+                        Math.max(1, Math.min(totalPages - 4, currentPage - 2)) +
+                        i;
+                      if (pageNum > totalPages) return null;
+                      return (
+                        <button
+                          key={pageNum}
+                          className={`join-item btn btn-sm ${
+                            currentPage === pageNum ? "btn-active" : ""
+                          }`}
+                          onClick={() => setCurrentPage(pageNum)}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      className="join-item btn btn-sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

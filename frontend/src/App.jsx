@@ -7,6 +7,9 @@ import UserManagement from './pages/UserManagement.jsx';
 import Analytics from './pages/Analytics.jsx';
 import { Activity } from 'lucide-react';
 import io from 'socket.io-client';
+import ActivityLogs from './pages/ActivityLogs.jsx';
+import RoleManagement from './pages/RoleManagement.jsx';
+import TagManagement from './pages/TagManagement.jsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -72,6 +75,36 @@ function App() {
           element={
             isAuthenticated ? (
               <LinkManagement onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/activity-logs"
+          element={
+            isAuthenticated ? (
+              <ActivityLogs onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/role-management"
+          element={
+            isAuthenticated ? (
+              <RoleManagement onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/tag-management"
+          element={
+            isAuthenticated ? (
+              <TagManagement onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )

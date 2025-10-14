@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import axios from "axios";
+import { Moon, Sun } from "lucide-react";
 import {
   Users,
   Plus,
@@ -11,15 +12,19 @@ import {
   ShieldCheck,
   ShieldX,
   Key,
-  LogOut,
-  Server,
-  BarChart3,
-  Link as LinkIcon,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 
 function UserManagement({ onLogout }) {
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  // Toggle theme
+  const toggleTheme = () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+  };
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -177,36 +182,29 @@ function UserManagement({ onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-base-200">
-      {/* Header */}
-      <div className="navbar bg-base-100 shadow-lg">
-        <div className="navbar-start">
-          <div className="flex items-center gap-2">
-            <Users className="w-8 h-8 text-primary" />
+    <div data-theme={theme} className="min-h-screen bg-base-200 flex">
+      <Sidebar onLogout={onLogout} />
+
+      <div className="flex-1 flex flex-col">
+        <div className="navbar bg-base-100 shadow-lg">
+          <div className="navbar-start">
             <h1 className="text-2xl font-bold text-primary">User Management</h1>
           </div>
+          <div className="navbar-end">
+            <button
+              onClick={toggleTheme}
+              className="btn btn-circle btn-ghost mr-2"
+            >
+              {theme === "light" ? (
+                <Moon className="w-5 h-5" />
+              ) : (
+                <Sun className="w-5 h-5" />
+              )}
+            </button>
+          </div>
         </div>
-        <div className="navbar-end">
-          <Link to="/dashboard" className="btn btn-outline btn-primary mr-2">
-            <Server className="w-4 h-4" />
-            Dashboard
-          </Link>
-          <Link to="/links" className="btn btn-outline btn-secondary mr-2">
-            <LinkIcon className="w-4 h-4" />
-            Links
-          </Link>
-          <Link to="/analytics" className="btn btn-outline btn-accent mr-2">
-            <BarChart3 className="w-4 h-4" />
-            Analytics
-          </Link>
-          <button onClick={handleLogout} className="btn btn-outline btn-error">
-            <LogOut className="w-4 h-4" />
-            Logout
-          </button>
-        </div>
-      </div>
 
-      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex-1 p-6 space-y-6">
         {error && (
           <div className="alert alert-error">
             <span>{error}</span>
@@ -395,8 +393,9 @@ function UserManagement({ onLogout }) {
           </div>
         </div>
       </div>
+    </div>
 
-      {/* Create User Modal */}
+    {/* Create User Modal */}
       {showCreateModal && (
         <div className="modal modal-open">
           <div className="modal-box max-w-md">

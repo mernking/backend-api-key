@@ -2,6 +2,7 @@ require('dotenv').config();
 const app = require('./app');
 const http = require('http');
 const { Server } = require('socket.io');
+const scheduledReportsService = require('./services/scheduled-reports.service');
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -24,6 +25,11 @@ io.on('connection', (socket) => {
 
 // Make io available in routes
 app.set('io', io);
+
+// Initialize scheduled reports service
+scheduledReportsService.initialize().catch(error => {
+  console.error('Failed to initialize scheduled reports service:', error);
+});
 
 server.listen(PORT, () => {
   console.log(`Server listening on ${PORT}`);
